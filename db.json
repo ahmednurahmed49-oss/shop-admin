@@ -1,24 +1,11 @@
 {
   "products": [
     {
-      "id": "1",
-      "name": "Nike Air Max 270",
-      "description": "Comfortable everyday sneakers with responsive cushioning.",
-      "price": 12000,
-      "category": "Shoes",
-      "stock": 25,
-      "sku": "NK-AM270-001",
-      "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800",
-      "status": "Active",
-      "createdAt": "2026-01-04",
-      "updatedAt": "2026-02-01"
-    },
-    {
       "id": "2",
       "name": "Samsung Galaxy A55",
       "description": "Mid-range smartphone with a great camera and vibrant display.",
-      "price": 46500,
-      "category": "Electronics",
+      "price": 60000,
+      "category": "Clothing",
       "stock": 3,
       "sku": "SM-A55-003",
       "image": "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800",
