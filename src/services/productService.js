@@ -1,65 +1,175 @@
-/**
- * Centralised API base URL.
- *
- * Local development:
- * VITE_API_URL=http://localhost:3000
- *
- * If no VITE_API_URL is provided, it uses /api/public.
- */
-export const API_BASE_URL = "http://localhost:3000";
-  import.meta.env?.VITE_API_URL || "/api/public";
+// src/services/productService.js
 
-const PRODUCTS_URL = `${API_BASE_URL}/products`;
+const API_URL = import.meta.env.VITE_API_URL;
+const API_KEY = import.meta.env.VITE_API_KEY;
 
-async function request(url, options = {}) {
-  let response;
+const headers = {
+  "Content-Type": "application/json",
+  "X-Master-Key": API_KEY,
+};
 
+// Get all products
+export const getProducts = async () => {
   try {
-    response = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      ...options,
+    const response = await fetch(`${API_URL}/latest`, {
+      method: "GET",
+      headers,
     });
-  } catch {
-    throw new Error(
-      "Unable to reach the server. Please check your connection and try again."
-    );
-  }
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error("Product not found.");
+    const result = await response.json();
+
+    console.log("JSONBin response:", result);
+
+    if (!response.ok) {
+      throw new Error(
+        result.message || `Failed to fetch products: ${response.status}`
+      );
     }
 
-    throw new Error(`Request failed with status ${response.status}.`);
+    return result.record?.products || [];
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    throw error;
   }
+};
 
-  if (response.status === 204) {
-    return undefined;
+// Get one product by ID
+export const getProduct = async (id) => {
+  try {
+    const products = await getProducts();
+
+    const product = products.find(
+      (item) => String(item.id) === String(id)
+    );
+
+    if (!product) {
+      throw new Error(`Product with ID ${id} was not found`);
+    }
+
+    return product;
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    throw error;
   }
+};
 
-  return await response.json();
-}
+// Add a new product
+export const addProduct = async (product) => {
+  try {
+    const products = await getProducts();
 
-export const getProducts = () => request(PRODUCTS_URL);
+    const newProduct = {
+      ...product,
+      id: Date.now(),
+    };
 
-export const getProduct = (id) =>
-  request(`${PRODUCTS_URL}/${id}`);
+    const updatedProducts = [...products, newProduct];
 
-export const createProduct = (product) =>
-  request(PRODUCTS_URL, {
-    method: "POST",
-    body: JSON.stringify(product),
-  });
+    const response = await fetch(API_URL, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        products: updatedProducts,
+      }),
+    });
 
-export const updateProduct = (id, changes) =>
-  request(`${PRODUCTS_URL}/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify(changes),
-  });
+    const result = await response.json();
 
-export const deleteProduct = (id) =>
-  request(`${PRODUCTS_URL}/${id}`, {
-    method: "DELETE",
-  });
+    if (!response.ok) {
+      throw new Error(
+        result.message || `Failed to add product: ${response.status}`
+      );
+    }
+
+    return result.record?.products || updatedProducts;
+  } catch (error) {
+    console.error("Error adding product:", error);
+    throw error;
+  }
+};
+
+// Update an existing product
+export const updateProduct = async (id, updatedProduct) => {
+  try {
+    const products = await getProducts();
+
+    const productExists = products.some(
+      (product) => String(product.id) === String(id)
+    );
+
+    if (!productExists) {
+      throw new Error(`Product with ID ${id} was not found`);
+    }
+
+    const updatedProducts = products.map((product) =>
+      String(product.id) === String(id)
+        ? {
+            ...product,
+            ...updatedProduct,
+            id: product.id,
+          }
+        : product
+    );
+
+    const response = await fetch(API_URL, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        products: updatedProducts,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.message || `Failed to update product: ${response.status}`
+      );
+    }
+
+    return result.record?.products || updatedProducts;
+  } catch (error) {
+    console.error("Error updating product:", error);
+    throw error;
+  }
+};
+
+// Delete a product
+export const deleteProduct = async (id) => {
+  try {
+    const products = await getProducts();
+
+    const productExists = products.some(
+      (product) => String(product.id) === String(id)
+    );
+
+    if (!productExists) {
+      throw new Error(`Product with ID ${id} was not found`);
+    }
+
+    const updatedProducts = products.filter(
+      (product) => String(product.id) !== String(id)
+    );
+
+    const response = await fetch(API_URL, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        products: updatedProducts,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        result.message || `Failed to delete product: ${response.status}`
+      );
+    }
+
+    return result.record?.products || updatedProducts;
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    throw error;
+  }
+};
